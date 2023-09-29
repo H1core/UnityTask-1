@@ -8,6 +8,6 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
 {
     public interface IChessUnityMoving
     {
-        List<UnityEngine.Vector2Int> GetPossibleCordintaes(UnityEngine.Vector2Int startPos , bool[,] grid);
+        List<UnityEngine.Vector2Int> GetPossibleCordintaes(UnityEngine.Vector2Int startPos , UnityEngine.Vector2Int size, bool[,] grid);
     }
 }

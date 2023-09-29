@@ -9,79 +9,70 @@ namespace App.Scripts.Scenes.SceneChess.Features.GridNavigation.Navigator
     public class ChessGridNavigator : IChessGridNavigator
     {
         IChessUnityMoving chessUnityMoving;
-
-        public List<Vector2Int> FindPath(ChessUnitType unit, Vector2Int from, Vector2Int to, ChessGrid grid)
+        
+        private IChessUnityMoving getRequiredInterface(ChessUnitType unit)
         {
-            int[,] field = new int[8, 8];
-            bool[,] Cells = new bool[8, 8];
-            for(int i = 0; i < 8; i++)
-            {
-                for(int j = 0; j < 8; j++)
-                {
-                    field[i, j] = 2147483647;
-                    Cells[i, j] = false;
-                }
-                
-            }
-            foreach(var piece in grid.Pieces)
-            {
-                Cells[piece.CellPosition.x, piece.CellPosition.y] = true;
-            }
-            Cells[from.x, from.y] = false;
-            field[from.x, from.y] = 0;
             switch (unit)
             {
-                case ChessUnitType.Knight: { chessUnityMoving = new HorseUnitMove(); break; }
-                case ChessUnitType.Bishop: { chessUnityMoving = new BishopUnitMove(); break; }
-                case ChessUnitType.Queen: { chessUnityMoving = new QueenUnitMove(); break; }
-                case ChessUnitType.King: { chessUnityMoving = new KingUnitMove(); break; }
-                case ChessUnitType.Rook: { chessUnityMoving = new RookUnitMove(); break; }
-                case ChessUnitType.Pon: { chessUnityMoving = new PonUnitMove(); var t = chessUnityMoving as PonUnitMove; t.color = grid.Get(from).PieceModel.Color == ChessUnitColor.White ? -1 : 1; break; }
-                default: { chessUnityMoving = new HorseUnitMove(); break; }
+                case ChessUnitType.Knight: { return new HorseUnitMove();}
+                case ChessUnitType.Bishop: { return new BishopUnitMove();}
+                case ChessUnitType.Queen: { return new QueenUnitMove(); }
+                case ChessUnitType.King: { return new KingUnitMove();}
+                case ChessUnitType.Rook: { return new RookUnitMove();}
+                case ChessUnitType.Pon: { return new PonUnitMove();}
             }
-            
-            //Создания массива "очков" -> в каждой позиции массива нахоидтся число , являющимся кол-вом ходов до этой клетки
+            return null;
+        }
+        private void CalculatePath(ref List<Vector2Int>[,] field, ref bool[,] Cells, ref Vector2Int from, ref ChessGrid grid)
+        {
+            Cells[from.x, from.y] = true;
+            field[from.x, from.y].Add(from);
             Queue<Vector2Int> queue = new Queue<Vector2Int>();
             queue.Enqueue(from);
             while (queue.Count > 0)
             {
                 var position = queue.Dequeue();
-                foreach (var nextPosition in chessUnityMoving.GetPossibleCordintaes(position, Cells))
+                foreach (var nextPosition in chessUnityMoving.GetPossibleCordintaes(position, grid.Size, Cells))
                 {
-                    if (field[nextPosition.x, nextPosition.y] > field[position.x, position.y] + 1)
+                    if (Cells[nextPosition.x, nextPosition.y] == false)
                     {
-                        field[nextPosition.x, nextPosition.y] = field[position.x, position.y] + 1;
+                        Cells[nextPosition.x, nextPosition.y] = true;
+                        foreach (var pos in field[position.x, position.y])
+                            field[nextPosition.x, nextPosition.y].Add(pos);
+                        field[nextPosition.x, nextPosition.y].Add(nextPosition);
                         queue.Enqueue(nextPosition);
                     }
                 }
             }
-            if(field[to.x, to.y] == 2147483647)
+        }
+        private void initArrays(ref List<Vector2Int>[,] field, ref bool[,] Cells , ref ChessGrid grid)
+        {
+            for (int i = 0; i < grid.Size.x; i++)
             {
-                return null;
-            }
-            //Восстановление пути используя массив
-            List<Vector2Int> result = new List<Vector2Int>();
-            Vector2Int recoveryPos = to;
-
-            if (chessUnityMoving as PonUnitMove != null) {
-                (chessUnityMoving as PonUnitMove).ReverseColor();
-            }
-
-            while (field[recoveryPos.x, recoveryPos.y] > 0)
-            {
-                result.Add(recoveryPos);
-                foreach(var previousPosition in chessUnityMoving.GetPossibleCordintaes(recoveryPos, Cells))
+                for (int j = 0; j < grid.Size.y; j++)
                 {
-                    if(field[recoveryPos.x, recoveryPos.y] == field[previousPosition.x,previousPosition.y] + 1)
-                    {
-                        recoveryPos = previousPosition;
-                        break;
-                    }
+                    field[i, j] = new List<Vector2Int>();
+                    Cells[i, j] = false;
                 }
-
             }
-            result.Reverse();
-            return result;
+            foreach (var piece in grid.Pieces)
+                Cells[piece.CellPosition.x, piece.CellPosition.y] = true;
+        }
+        public List<Vector2Int> FindPath(ChessUnitType unit, Vector2Int from, Vector2Int to, ChessGrid grid)
+        {
+            List<Vector2Int>[,] field = new List<Vector2Int>[grid.Size.x, grid.Size.y];
+            bool[,] Cells = new bool[grid.Size.x, grid.Size.y];
+
+            initArrays(ref field, ref Cells, ref grid);
+
+            chessUnityMoving = getRequiredInterface(unit);
+
+            CalculatePath(ref field, ref Cells, ref from, ref grid);
+
+            if (field[to.x, to.y].Count == 0)
+                return null;
+            else
+                return field[to.x, to.y];
         }
     }
 }

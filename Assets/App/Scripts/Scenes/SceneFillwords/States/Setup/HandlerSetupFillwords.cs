@@ -27,18 +27,7 @@ namespace App.Scripts.Scenes.SceneFillwords.States.Setup
         private int previousLevelIndex = -1;
         public Task Process()
         {
-            if (previousLevelIndex == -1)
-                previousLevelIndex = _serviceLevelSelection.CurrentLevelIndex;
-            int direciton = (previousLevelIndex <= _serviceLevelSelection.CurrentLevelIndex ? 1 : -1);
-            GridFillWords model = null;
-            do
-            {
-                model = _providerFillwordLevel.LoadModel(_serviceLevelSelection.CurrentLevelIndex);
-                if(model == null)
-                {
-                    _serviceLevelSelection.UpdateSelectedLevel(_serviceLevelSelection.CurrentLevelIndex + direciton);
-                }
-            } while (model == null);
+            GridFillWords model = _providerFillwordLevel.LoadModel(_serviceLevelSelection.CurrentLevelIndex);
             _viewGridLetters.UpdateItems(model);
             _containerGrid.SetupGrid(model, _serviceLevelSelection.CurrentLevelIndex);
             previousLevelIndex = _serviceLevelSelection.CurrentLevelIndex;

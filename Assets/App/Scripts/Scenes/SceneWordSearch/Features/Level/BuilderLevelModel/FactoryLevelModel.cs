@@ -21,37 +21,21 @@ namespace App.Scripts.Scenes.SceneWordSearch.Features.Level.BuilderLevelModel
 
         private List<char> BuildListChars(List<string> words)
         {
-            //Алгоритм делался через словари , т.к. мы получаем доступ к количеству букв за 0(1), однако в конце присутсвует обработка словаря за O(n)  
-            //Если бы я использовал List<char> то каждый раз чтобы обновить результат мне нужно было бы пересчитывать кол-во букв , в худшем случае O(n) каждый раз в цикле
-            Dictionary<char,int> globalLetterCount = new Dictionary<char, int>();
+            List<char> result = new List<char>();
 
             foreach (var word in words)
             {
-                Dictionary<char, int> keyValuePairs = new Dictionary<char, int>();
+                List<char> wordLetters = new List<char>();
                 for(int i = 0; i < word.Length; i++)
                 {
-                    if (keyValuePairs.ContainsKey(word[i]))
-                    {
-                        keyValuePairs[word[i]]++;
-                        globalLetterCount[word[i]] = UnityEngine.Mathf.Max(globalLetterCount[word[i]], keyValuePairs[word[i]]);
-                    }
-                    else
-                    {
-                        keyValuePairs.Add(word[i],1);
-                        if (!globalLetterCount.ContainsKey(word[i]))
-                        {
-                            globalLetterCount.Add(word[i],1);
-                        }
-                        globalLetterCount[word[i]] = UnityEngine.Mathf.Max(globalLetterCount[word[i]], keyValuePairs[word[i]]);
-                    }
+                    wordLetters.Add(word[i]);
                 }
-            }
-            List<char> result = new List<char>();
-            foreach(var key in globalLetterCount.Keys)
-            {
-                for(int i = 0; i < globalLetterCount[key]; i++)
+                foreach(var letter in wordLetters)
                 {
-                    result.Add(key);
+                    if(result.FindAll(obj => obj == letter).Count < wordLetters.FindAll(obj => obj == letter).Count)
+                    {
+                        result.Add(letter);
+                    }
                 }
             }
             return result;
